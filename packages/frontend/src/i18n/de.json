@@ -1,0 +1,90 @@
+{
+  "app": {
+    "title": "Timetracker",
+    "loading": "Laden..."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projekte",
+    "entries": "Zeiteintraege",
+    "clients": "Kunden",
+    "reports": "Reports",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "name": "Name",
+    "noAccount": "Noch kein Konto?",
+    "hasAccount": "Bereits registriert?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "todayHours": "Stunden heute",
+    "weekHours": "Stunden diese Woche",
+    "monthHours": "Stunden diesen Monat",
+    "activeProjects": "Aktive Projekte",
+    "recentEntries": "Letzte Eintraege"
+  },
+  "projects": {
+    "title": "Projekte",
+    "new": "Neues Projekt",
+    "name": "Projektname",
+    "description": "Beschreibung",
+    "hourlyRate": "Stundensatz (CHF)",
+    "client": "Kunde",
+    "color": "Farbe",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "noProjects": "Keine Projekte vorhanden"
+  },
+  "entries": {
+    "title": "Zeiteintraege",
+    "new": "Neuer Eintrag",
+    "description": "Beschreibung",
+    "project": "Projekt",
+    "date": "Datum",
+    "start": "Start",
+    "end": "Ende",
+    "duration": "Dauer",
+    "timer": {
+      "start": "Timer starten",
+      "stop": "Timer stoppen",
+      "running": "Timer laeuft"
+    },
+    "noEntries": "Keine Eintraege vorhanden"
+  },
+  "clients": {
+    "title": "Kunden",
+    "new": "Neuer Kunde",
+    "name": "Name",
+    "company": "Firma",
+    "email": "E-Mail",
+    "address": "Adresse"
+  },
+  "reports": {
+    "title": "Reports",
+    "summary": "Zusammenfassung",
+    "period": "Zeitraum",
+    "totalHours": "Total Stunden",
+    "totalAmount": "Total Betrag",
+    "exportCsv": "CSV exportieren",
+    "exportPdf": "PDF exportieren"
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Loeschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "noData": "Keine Daten vorhanden",
+    "confirm": "Bestaetigen",
+    "hours": "Stunden",
+    "minutes": "Minuten"
+  }
+}

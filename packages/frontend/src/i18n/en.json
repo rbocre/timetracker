@@ -1,0 +1,90 @@
+{
+  "app": {
+    "title": "Timetracker",
+    "loading": "Loading..."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "entries": "Time Entries",
+    "clients": "Clients",
+    "reports": "Reports",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "noAccount": "No account yet?",
+    "hasAccount": "Already registered?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "todayHours": "Hours today",
+    "weekHours": "Hours this week",
+    "monthHours": "Hours this month",
+    "activeProjects": "Active projects",
+    "recentEntries": "Recent entries"
+  },
+  "projects": {
+    "title": "Projects",
+    "new": "New project",
+    "name": "Project name",
+    "description": "Description",
+    "hourlyRate": "Hourly rate (CHF)",
+    "client": "Client",
+    "color": "Color",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noProjects": "No projects found"
+  },
+  "entries": {
+    "title": "Time Entries",
+    "new": "New entry",
+    "description": "Description",
+    "project": "Project",
+    "date": "Date",
+    "start": "Start",
+    "end": "End",
+    "duration": "Duration",
+    "timer": {
+      "start": "Start timer",
+      "stop": "Stop timer",
+      "running": "Timer running"
+    },
+    "noEntries": "No entries found"
+  },
+  "clients": {
+    "title": "Clients",
+    "new": "New client",
+    "name": "Name",
+    "company": "Company",
+    "email": "Email",
+    "address": "Address"
+  },
+  "reports": {
+    "title": "Reports",
+    "summary": "Summary",
+    "period": "Period",
+    "totalHours": "Total hours",
+    "totalAmount": "Total amount",
+    "exportCsv": "Export CSV",
+    "exportPdf": "Export PDF"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "noData": "No data available",
+    "confirm": "Confirm",
+    "hours": "Hours",
+    "minutes": "Minutes"
+  }
+}
