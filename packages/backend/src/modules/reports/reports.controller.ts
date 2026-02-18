@@ -4,8 +4,19 @@ import { sendSuccess } from '../../shared/response.js';
 
 export async function getSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { dateFrom, dateTo } = req.query as { dateFrom: string; dateTo: string };
-    const summary = await reportsService.getSummary(req.user!.userId, dateFrom, dateTo);
+    const { dateFrom, dateTo, clientId, projectId } = req.query as {
+      dateFrom: string;
+      dateTo: string;
+      clientId?: string;
+      projectId?: string;
+    };
+    const summary = await reportsService.getSummary(
+      req.user!.userId,
+      dateFrom,
+      dateTo,
+      clientId || undefined,
+      projectId || undefined,
+    );
     sendSuccess(res, summary);
   } catch (err) {
     next(err);
@@ -27,10 +38,25 @@ export async function getProjectReport(
 
 export async function exportCsv(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { dateFrom, dateTo } = req.query as { dateFrom: string; dateTo: string };
-    const csv = await reportsService.exportCsv(req.user!.userId, dateFrom, dateTo);
+    const { dateFrom, dateTo, clientId, projectId } = req.query as {
+      dateFrom: string;
+      dateTo: string;
+      clientId?: string;
+      projectId?: string;
+    };
+    const csv = await reportsService.exportCsv(req.user!.userId, {
+      dateFrom,
+      dateTo,
+      clientId: clientId || undefined,
+      projectId: projectId || undefined,
+    });
+
+    let filename = `timetracker-export-${dateFrom}-${dateTo}`;
+    if (clientId) filename += `-client-${clientId}`;
+    if (projectId) filename += `-project-${projectId}`;
+
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=timetracker-export-${dateFrom}-${dateTo}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}.csv`);
     res.send(csv);
   } catch (err) {
     next(err);

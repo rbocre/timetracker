@@ -48,7 +48,7 @@ export async function update(req: Request, res: Response, next: NextFunction): P
 export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     await projectsService.remove(req.params.id, req.user!.userId);
-    sendSuccess(res, { message: 'Project deactivated' });
+    sendSuccess(res, { message: 'Project deleted' });
   } catch (err) {
     next(err);
   }

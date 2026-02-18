@@ -3,6 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { Download, Calendar } from 'lucide-react';
 import { api } from '../lib/api';
 
+interface Client {
+  id: string;
+  name: string;
+  company: string | null;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  color: string;
+  client: Client | null;
+}
+
 interface ProjectSummary {
   project: {
     id: string;
@@ -37,20 +50,35 @@ export function ReportsPage() {
   const defaults = getDefaultDateRange();
   const [dateFrom, setDateFrom] = useState(defaults.from);
   const [dateTo, setDateTo] = useState(defaults.to);
+  const [clientId, setClientId] = useState('');
+  const [projectId, setProjectId] = useState('');
   const [summary, setSummary] = useState<SummaryData | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
 
   useEffect(() => {
+    loadFilterData();
     loadSummary();
   }, []);
+
+  async function loadFilterData() {
+    const [cRes, pRes] = await Promise.all([
+      api.get<Client[]>('/clients'),
+      api.get<Project[]>('/projects'),
+    ]);
+    if (cRes.data) setClients(cRes.data);
+    if (pRes.data) setProjects(pRes.data);
+  }
 
   async function loadSummary() {
     setLoading(true);
     try {
-      const res = await api.get<SummaryData>(
-        `/reports/summary?dateFrom=${dateFrom}&dateTo=${dateTo}`,
-      );
+      let url = `/reports/summary?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+      if (clientId) url += `&clientId=${clientId}`;
+      if (projectId) url += `&projectId=${projectId}`;
+      const res = await api.get<SummaryData>(url);
       if (res.data) setSummary(res.data);
     } catch (err) {
       console.error('Failed to load report', err);
@@ -59,49 +87,56 @@ export function ReportsPage() {
     }
   }
 
-  async function handleExportCsv() {
-    setExporting(true);
+  async function downloadCsv(filterClientId?: string, filterProjectId?: string, label?: string) {
+    const exportKey = filterClientId ?? filterProjectId ?? 'all';
+    setExporting(exportKey);
     try {
       const token = api.getToken();
-      const res = await fetch(
-        `/api/reports/export/csv?dateFrom=${dateFrom}&dateTo=${dateTo}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        },
-      );
+      let url = `/api/reports/export/csv?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+      if (filterClientId) url += `&clientId=${filterClientId}`;
+      if (filterProjectId) url += `&projectId=${filterProjectId}`;
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `timetracker-export-${dateFrom}-${dateTo}.csv`;
+      a.href = blobUrl;
+      let filename = `timetracker-${dateFrom}-${dateTo}`;
+      if (label) filename += `-${label.replace(/\s+/g, '-').toLowerCase()}`;
+      a.download = `${filename}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error('CSV export failed', err);
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   }
 
   const totalAmount = summary?.byProject.reduce((sum, p) => sum + p.totalAmount, 0) ?? 0;
+
+  const filteredProjects = clientId
+    ? projects.filter((p) => p.client?.id === clientId)
+    : projects;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{t('reports.title')}</h1>
         <button
-          onClick={handleExportCsv}
-          disabled={exporting}
+          onClick={() => downloadCsv(clientId || undefined, projectId || undefined, 'gesamt')}
+          disabled={!!exporting}
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
         >
           <Download className="h-5 w-5" />
-          {exporting ? '...' : t('reports.exportCsv')}
+          {exporting === 'all' ? '...' : t('reports.exportCsv')}
         </button>
       </div>
 
-      {/* Date Range Filter */}
+      {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-end gap-4 flex-wrap">
           <div>
@@ -127,6 +162,39 @@ export function ReportsPage() {
                 className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kunde</label>
+            <select
+              value={clientId}
+              onChange={(e) => {
+                setClientId(e.target.value);
+                setProjectId('');
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[160px]"
+            >
+              <option value="">Alle Kunden</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.company ?? c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Projekt</label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[160px]"
+            >
+              <option value="">Alle Projekte</option>
+              {filteredProjects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
           <button
             onClick={loadSummary}
@@ -183,6 +251,7 @@ export function ReportsPage() {
                   <th className="text-right py-3 px-2 font-medium text-gray-500">{t('reports.totalHours')}</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-500">Stundensatz</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-500">Betrag (CHF)</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-500">Export</th>
                 </tr>
               </thead>
               <tbody>
@@ -209,6 +278,16 @@ export function ReportsPage() {
                     <td className="py-3 px-2 text-right text-gray-700 font-medium">
                       {item.totalAmount > 0 ? `CHF ${item.totalAmount.toFixed(2)}` : '-'}
                     </td>
+                    <td className="py-3 px-2 text-right">
+                      <button
+                        onClick={() => downloadCsv(undefined, item.project.id, item.project.name)}
+                        disabled={!!exporting}
+                        className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                        title={`CSV: ${item.project.name}`}
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -225,6 +304,7 @@ export function ReportsPage() {
                   <td className="py-3 px-2 text-right font-bold text-gray-900">
                     CHF {totalAmount.toFixed(2)}
                   </td>
+                  <td className="py-3 px-2" />
                 </tr>
               </tfoot>
             </table>

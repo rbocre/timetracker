@@ -54,8 +54,7 @@ export async function update(id: string, userId: string, input: UpdateProjectInp
 export async function remove(id: string, userId: string) {
   await getById(id, userId);
 
-  return prisma.project.update({
+  return prisma.project.delete({
     where: { id },
-    data: { isActive: false },
   });
 }

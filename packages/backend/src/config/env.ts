@@ -2,8 +2,15 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 import { z } from 'zod';
 
-// Load .env from project root
-config({ path: resolve(process.cwd(), '.env') });
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env from project root (two levels up from packages/backend/src/config/)
+const envPath = resolve(__dirname, '..', '..', '..', '..', '.env');
+config({ path: envPath });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

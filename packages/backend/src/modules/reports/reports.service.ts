@@ -1,17 +1,34 @@
 import { prisma } from '../../config/database.js';
 
-export async function getSummary(userId: string, dateFrom: string, dateTo: string) {
-  const entries = await prisma.timeEntry.findMany({
-    where: {
-      userId,
-      date: {
-        gte: new Date(dateFrom),
-        lte: new Date(dateTo),
-      },
+interface ExportFilters {
+  dateFrom: string;
+  dateTo: string;
+  clientId?: string;
+  projectId?: string;
+}
+
+export async function getSummary(userId: string, dateFrom: string, dateTo: string, clientId?: string, projectId?: string) {
+  const where: Record<string, unknown> = {
+    userId,
+    date: {
+      gte: new Date(dateFrom),
+      lte: new Date(dateTo),
     },
+  };
+
+  if (projectId) {
+    where.projectId = projectId;
+  }
+
+  if (clientId) {
+    where.project = { clientId };
+  }
+
+  const entries = await prisma.timeEntry.findMany({
+    where,
     include: {
       project: {
-        select: { id: true, name: true, color: true, hourlyRate: true },
+        select: { id: true, name: true, color: true, hourlyRate: true, clientId: true },
       },
     },
   });
@@ -77,29 +94,43 @@ export async function getProjectReport(userId: string, projectId: string) {
   };
 }
 
-export async function exportCsv(userId: string, dateFrom: string, dateTo: string): Promise<string> {
-  const entries = await prisma.timeEntry.findMany({
-    where: {
-      userId,
-      date: {
-        gte: new Date(dateFrom),
-        lte: new Date(dateTo),
-      },
+export async function exportCsv(userId: string, filters: ExportFilters): Promise<string> {
+  const where: Record<string, unknown> = {
+    userId,
+    date: {
+      gte: new Date(filters.dateFrom),
+      lte: new Date(filters.dateTo),
     },
+  };
+
+  if (filters.projectId) {
+    where.projectId = filters.projectId;
+  }
+
+  if (filters.clientId) {
+    where.project = { clientId: filters.clientId };
+  }
+
+  const entries = await prisma.timeEntry.findMany({
+    where,
     include: {
-      project: { select: { name: true } },
+      project: {
+        select: { name: true, client: { select: { name: true, company: true } } },
+      },
     },
     orderBy: { date: 'asc' },
   });
 
-  const header = 'Date,Project,Description,Start,End,Duration (min),Duration (h)';
+  const header = 'Date,Client,Project,Description,Start,End,Duration (min),Duration (h)';
   const rows = entries.map((e) => {
     const date = e.date.toISOString().split('T')[0];
     const start = e.startTime.toISOString();
     const end = e.endTime?.toISOString() ?? '';
     const hours = e.duration ? (e.duration / 60).toFixed(2) : '';
     const desc = (e.description ?? '').replace(/,/g, ';');
-    return `${date},${e.project.name},${desc},${start},${end},${e.duration ?? ''},${hours}`;
+    const clientName = (e.project.client?.company ?? e.project.client?.name ?? '').replace(/,/g, ';');
+    const projName = e.project.name.replace(/,/g, ';');
+    return `${date},${clientName},${projName},${desc},${start},${end},${e.duration ?? ''},${hours}`;
   });
 
   return [header, ...rows].join('\n');
