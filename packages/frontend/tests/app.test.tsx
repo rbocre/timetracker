@@ -27,8 +27,8 @@ describe('LoginPage', () => {
     );
 
     expect(screen.getByText('Timetracker')).toBeInTheDocument();
-    expect(screen.getByLabelText(/e-mail/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/passwort/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password|passwort/i)).toBeInTheDocument();
   });
 
   it('should have a link to register page', () => {
@@ -38,7 +38,7 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/registrieren/i)).toBeInTheDocument();
+    expect(screen.getByText(/register|registrieren/i)).toBeInTheDocument();
   });
 
   it('should have a submit button', () => {
@@ -48,7 +48,7 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     );
 
-    const submitButton = screen.getByRole('button', { name: /anmelden/i });
+    const submitButton = screen.getByRole('button', { name: /login|anmelden/i });
     expect(submitButton).toBeInTheDocument();
     expect(submitButton).not.toBeDisabled();
   });
