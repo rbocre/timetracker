@@ -1,6 +1,6 @@
 # Timetracker
 
-![CI](https://github.com/YOUR_USERNAME/timetracker/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/rbocre/timetracker/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)
 ![TypeScript](https://img.shields.io/badge/typescript-5.7-blue.svg)
@@ -42,7 +42,7 @@ Stundenerfassungs-App fuer Schweizer IT-Spezialisten. Trackt Stunden pro Projekt
 
 ```bash
 # Repository klonen
-git clone https://github.com/YOUR_USERNAME/timetracker.git
+git clone https://github.com/rbocre/timetracker.git
 cd timetracker
 
 # In VS Code oeffnen
