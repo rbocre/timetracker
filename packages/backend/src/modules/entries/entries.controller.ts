@@ -23,7 +23,7 @@ export async function getAll(req: Request, res: Response, next: NextFunction): P
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const entry = await entriesService.getById(req.params.id, req.user!.userId);
+    const entry = await entriesService.getById(req.params.id as string, req.user!.userId);
     sendSuccess(res, entry);
   } catch (err) {
     next(err);
@@ -42,7 +42,7 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const entry = await entriesService.update(
-      req.params.id,
+      req.params.id as string,
       req.user!.userId,
       req.body as UpdateEntryInput,
     );
@@ -54,8 +54,29 @@ export async function update(req: Request, res: Response, next: NextFunction): P
 
 export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await entriesService.remove(req.params.id, req.user!.userId);
+    await entriesService.remove(req.params.id as string, req.user!.userId);
     sendSuccess(res, { message: 'Entry deleted' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function checkOverlap(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { projectId, startTime, endTime, excludeEntryId } = req.body as {
+      projectId: string;
+      startTime: string;
+      endTime: string;
+      excludeEntryId?: string;
+    };
+    const overlaps = await entriesService.checkOverlap(
+      req.user!.userId,
+      projectId,
+      startTime,
+      endTime,
+      excludeEntryId,
+    );
+    sendSuccess(res, overlaps);
   } catch (err) {
     next(err);
   }
@@ -72,7 +93,7 @@ export async function startTimer(req: Request, res: Response, next: NextFunction
 
 export async function stopTimer(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const entry = await entriesService.stopTimer(req.params.id, req.user!.userId);
+    const entry = await entriesService.stopTimer(req.params.id as string, req.user!.userId);
     sendSuccess(res, entry);
   } catch (err) {
     next(err);

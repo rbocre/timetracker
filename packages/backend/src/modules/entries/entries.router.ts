@@ -9,6 +9,7 @@ const router = Router();
 router.use(authGuard);
 
 router.get('/', entriesController.getAll);
+router.post('/check-overlap', entriesController.checkOverlap);
 router.post('/', validate(createEntrySchema), entriesController.create);
 router.get('/:id', entriesController.getById);
 router.put('/:id', validate(updateEntrySchema), entriesController.update);
