@@ -74,6 +74,7 @@ export function EntriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<TimeEntry | null>(null);
   const [overlapEntries, setOverlapEntries] = useState<TimeEntry[]>([]);
   const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null);
+  const [isTimerOverlapModal, setIsTimerOverlapModal] = useState(false);
 
   // Timer state
   const [runningEntry, setRunningEntry] = useState<TimeEntry | null>(null);
@@ -123,8 +124,7 @@ export function EntriesPage() {
     };
   }, [runningEntry]);
 
-  const startTimer = async () => {
-    if (!timerProjectId) return;
+  const doStartTimer = async () => {
     const res = await api.post<TimeEntry>('/entries/timer/start', {
       projectId: timerProjectId,
       description: timerDesc || undefined,
@@ -133,8 +133,27 @@ export function EntriesPage() {
       setRunningEntry(res.data);
       setElapsed(0);
       setTimerDesc('');
+      setOverlapEntries([]);
+      setPendingSave(null);
+      setIsTimerOverlapModal(false);
       loadData();
     }
+  };
+
+  const startTimer = async () => {
+    if (!timerProjectId) return;
+    const now = new Date().toISOString();
+    const overlapRes = await api.post<TimeEntry[]>('/entries/check-overlap', {
+      projectId: timerProjectId,
+      startTime: now,
+    });
+    if (overlapRes.success && overlapRes.data && overlapRes.data.length > 0) {
+      setOverlapEntries(overlapRes.data);
+      setIsTimerOverlapModal(true);
+      setPendingSave(() => doStartTimer);
+      return;
+    }
+    await doStartTimer();
   };
 
   const stopTimer = async () => {
@@ -455,11 +474,14 @@ export function EntriesPage() {
       {/* Overlap Confirmation Dialog */}
       <Modal
         isOpen={overlapEntries.length > 0}
-        onClose={() => { setOverlapEntries([]); setPendingSave(null); }}
+        onClose={() => { setOverlapEntries([]); setPendingSave(null); setIsTimerOverlapModal(false); }}
         title="Zeitüberschneidung erkannt"
       >
         <p className="text-gray-600 mb-4">
-          Dieser Eintrag überschneidet sich mit {overlapEntries.length === 1 ? 'einem bestehenden Eintrag' : `${overlapEntries.length} bestehenden Einträgen`} für dieses Projekt:
+          {isTimerOverlapModal
+            ? 'Der Timer überschneidet sich mit '
+            : 'Dieser Eintrag überschneidet sich mit '}
+          {overlapEntries.length === 1 ? 'einem bestehenden Eintrag' : `${overlapEntries.length} bestehenden Einträgen`} für dieses Projekt:
         </p>
         <div className="space-y-2 mb-6">
           {overlapEntries.map((entry) => (
@@ -479,7 +501,7 @@ export function EntriesPage() {
         </div>
         <div className="flex justify-end gap-3">
           <button
-            onClick={() => { setOverlapEntries([]); setPendingSave(null); }}
+            onClick={() => { setOverlapEntries([]); setPendingSave(null); setIsTimerOverlapModal(false); }}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
           >
             {t('common.cancel')}
@@ -489,7 +511,7 @@ export function EntriesPage() {
             disabled={isSaving}
             className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
           >
-            {isSaving ? '...' : 'Trotzdem speichern'}
+            {isSaving ? '...' : isTimerOverlapModal ? 'Trotzdem starten' : 'Trotzdem speichern'}
           </button>
         </div>
       </Modal>

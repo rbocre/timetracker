@@ -101,21 +101,37 @@ export async function checkOverlap(
   userId: string,
   projectId: string,
   startTime: string,
-  endTime: string,
+  endTime: string | null | undefined,
   excludeEntryId?: string,
 ) {
   const start = new Date(startTime);
-  const end = new Date(endTime);
 
-  const where: Record<string, unknown> = {
-    userId,
-    projectId,
-    endTime: { not: null },
-    AND: [
-      { startTime: { lt: end } },
-      { endTime: { gt: start } },
-    ],
-  };
+  let where: Record<string, unknown>;
+
+  if (!endTime) {
+    // Open-ended timer start: check for any existing entry that covers "now"
+    // i.e. startTime <= now AND (endTime IS NULL OR endTime >= now)
+    where = {
+      userId,
+      projectId,
+      startTime: { lte: start },
+      OR: [
+        { endTime: null },
+        { endTime: { gte: start } },
+      ],
+    };
+  } else {
+    const end = new Date(endTime);
+    where = {
+      userId,
+      projectId,
+      endTime: { not: null },
+      AND: [
+        { startTime: { lt: end } },
+        { endTime: { gt: start } },
+      ],
+    };
+  }
 
   if (excludeEntryId) {
     (where as Record<string, unknown>).id = { not: excludeEntryId };
