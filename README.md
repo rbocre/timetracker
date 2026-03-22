@@ -17,6 +17,28 @@ Stundenerfassungs-App fuer Schweizer IT-Spezialisten. Trackt Stunden pro Projekt
 - JWT-basierte Authentifizierung
 - Responsive Design mit TailwindCSS
 
+## Overlap Detection
+
+Die App erkennt automatisch überlappende Zeiteinträge für dasselbe Projekt und verhindert so versehentliche Doppelerfassungen.
+
+### Wann wird es ausgelöst?
+
+- **Neuer Eintrag speichern** — beim manuellen Erstellen eines Eintrags
+- **Timer starten** — wenn ein neuer Timer für ein Projekt gestartet wird
+- **Timer stoppen** — wenn ein laufender Timer gestoppt wird und der resultierende Eintrag mit einem bestehenden kollidiert
+
+### Was passiert bei einer Überschneidung?
+
+Ein Bestätigungs-Popup erscheint mit den Details des kollidierenden Eintrags (Projekt, Start- und Endzeit). Der User kann entscheiden:
+
+| Aktion          | Button-Label         |
+|-----------------|----------------------|
+| Eintrag speichern | **Trotzdem speichern** |
+| Timer starten   | **Trotzdem starten** |
+| Timer stoppen   | **Trotzdem stoppen** |
+
+Wer auf den Button klickt, speichert trotz Überschneidung. Wer abbricht, kann den Eintrag zuerst korrigieren.
+
 ## Tech Stack
 
 | Layer    | Technologie                          |
