@@ -29,7 +29,7 @@ export async function getProjectReport(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const report = await reportsService.getProjectReport(req.user!.userId, req.params.id);
+    const report = await reportsService.getProjectReport(req.user!.userId, req.params.id as string);
     sendSuccess(res, report);
   } catch (err) {
     next(err);

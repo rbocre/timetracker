@@ -10,12 +10,12 @@ const BCRYPT_ROUNDS = 12;
 
 function generateTokens(payload: AuthPayload) {
   const accessToken = jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN,
-  });
+    expiresIn: env.JWT_EXPIRES_IN as string,
+  } as object);
 
   const refreshToken = jwt.sign(payload, env.JWT_REFRESH_SECRET, {
-    expiresIn: env.JWT_REFRESH_EXPIRES_IN,
-  });
+    expiresIn: env.JWT_REFRESH_EXPIRES_IN as string,
+  } as object);
 
   return { accessToken, refreshToken };
 }

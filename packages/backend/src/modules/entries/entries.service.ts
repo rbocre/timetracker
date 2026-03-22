@@ -97,6 +97,53 @@ export async function startTimer(userId: string, input: TimerStartInput) {
   });
 }
 
+export async function checkOverlap(
+  userId: string,
+  projectId: string,
+  startTime: string,
+  endTime: string | null | undefined,
+  excludeEntryId?: string,
+) {
+  const start = new Date(startTime);
+
+  let where: Record<string, unknown>;
+
+  if (!endTime) {
+    // Open-ended timer start: check for any existing entry that covers "now"
+    // i.e. startTime <= now AND (endTime IS NULL OR endTime >= now)
+    where = {
+      userId,
+      projectId,
+      startTime: { lte: start },
+      OR: [
+        { endTime: null },
+        { endTime: { gte: start } },
+      ],
+    };
+  } else {
+    const end = new Date(endTime);
+    where = {
+      userId,
+      projectId,
+      endTime: { not: null },
+      AND: [
+        { startTime: { lt: end } },
+        { endTime: { gt: start } },
+      ],
+    };
+  }
+
+  if (excludeEntryId) {
+    (where as Record<string, unknown>).id = { not: excludeEntryId };
+  }
+
+  return prisma.timeEntry.findMany({
+    where,
+    include: { project: { select: { id: true, name: true, color: true } } },
+    orderBy: { startTime: 'asc' },
+  });
+}
+
 export async function stopTimer(entryId: string, userId: string) {
   const entry = await getById(entryId, userId);
 

@@ -72,6 +72,10 @@ export function EntriesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<TimeEntry | null>(null);
+  const [overlapEntries, setOverlapEntries] = useState<TimeEntry[]>([]);
+  const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null);
+  const [isTimerOverlapModal, setIsTimerOverlapModal] = useState(false);
+  const [isStopTimerOverlapModal, setIsStopTimerOverlapModal] = useState(false);
 
   // Timer state
   const [runningEntry, setRunningEntry] = useState<TimeEntry | null>(null);
@@ -121,8 +125,7 @@ export function EntriesPage() {
     };
   }, [runningEntry]);
 
-  const startTimer = async () => {
-    if (!timerProjectId) return;
+  const doStartTimer = async () => {
     const res = await api.post<TimeEntry>('/entries/timer/start', {
       projectId: timerProjectId,
       description: timerDesc || undefined,
@@ -131,19 +134,59 @@ export function EntriesPage() {
       setRunningEntry(res.data);
       setElapsed(0);
       setTimerDesc('');
+      setOverlapEntries([]);
+      setPendingSave(null);
+      setIsTimerOverlapModal(false);
       loadData();
     }
   };
 
-  const stopTimer = async () => {
+  const startTimer = async () => {
+    if (!timerProjectId) return;
+    const now = new Date().toISOString();
+    const overlapRes = await api.post<TimeEntry[]>('/entries/check-overlap', {
+      projectId: timerProjectId,
+      startTime: now,
+    });
+    if (overlapRes.success && overlapRes.data && overlapRes.data.length > 0) {
+      setOverlapEntries(overlapRes.data);
+      setIsTimerOverlapModal(true);
+      setPendingSave(() => doStartTimer);
+      return;
+    }
+    await doStartTimer();
+  };
+
+  const doStopTimer = async () => {
     if (!runningEntry) return;
     const res = await api.post<TimeEntry>(`/entries/timer/${runningEntry.id}/stop`, {});
     if (res.success) {
       setRunningEntry(null);
       setElapsed(0);
       if (timerRef.current) clearInterval(timerRef.current);
+      setOverlapEntries([]);
+      setPendingSave(null);
+      setIsStopTimerOverlapModal(false);
       loadData();
     }
+  };
+
+  const stopTimer = async () => {
+    if (!runningEntry) return;
+    const now = new Date().toISOString();
+    const overlapRes = await api.post<TimeEntry[]>('/entries/check-overlap', {
+      projectId: runningEntry.project.id,
+      startTime: runningEntry.startTime,
+      endTime: now,
+      excludeEntryId: runningEntry.id,
+    });
+    if (overlapRes.success && overlapRes.data && overlapRes.data.length > 0) {
+      setOverlapEntries(overlapRes.data);
+      setIsStopTimerOverlapModal(true);
+      setPendingSave(() => doStopTimer);
+      return;
+    }
+    await doStopTimer();
   };
 
   const openCreate = () => {
@@ -166,9 +209,25 @@ export function EntriesPage() {
     setShowForm(true);
   };
 
+  const doSave = async (body: Record<string, unknown>) => {
+    setIsSaving(true);
+    const res = editingId
+      ? await api.put<TimeEntry>(`/entries/${editingId}`, body)
+      : await api.post<TimeEntry>('/entries', body);
+
+    if (res.success) {
+      setShowForm(false);
+      setOverlapEntries([]);
+      setPendingSave(null);
+      loadData();
+    } else {
+      setError(res.error ?? 'Error');
+    }
+    setIsSaving(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
     setError('');
 
     const startDt = new Date(`${form.date}T${form.startTime}:00`);
@@ -184,17 +243,23 @@ export function EntriesPage() {
       duration,
     };
 
-    const res = editingId
-      ? await api.put<TimeEntry>(`/entries/${editingId}`, body)
-      : await api.post<TimeEntry>('/entries', body);
+    // Check for overlaps if endTime is set
+    if (form.projectId && endDt) {
+      const overlapRes = await api.post<TimeEntry[]>('/entries/check-overlap', {
+        projectId: form.projectId,
+        startTime: startDt.toISOString(),
+        endTime: endDt.toISOString(),
+        excludeEntryId: editingId ?? undefined,
+      });
 
-    if (res.success) {
-      setShowForm(false);
-      loadData();
-    } else {
-      setError(res.error ?? 'Error');
+      if (overlapRes.success && overlapRes.data && overlapRes.data.length > 0) {
+        setOverlapEntries(overlapRes.data);
+        setPendingSave(() => () => doSave(body));
+        return;
+      }
     }
-    setIsSaving(false);
+
+    await doSave(body);
   };
 
   const handleDelete = async () => {
@@ -427,6 +492,53 @@ export function EntriesPage() {
         message="Eintrag wirklich loeschen?"
         confirmLabel={t('common.delete')}
       />
+
+      {/* Overlap Confirmation Dialog */}
+      <Modal
+        isOpen={overlapEntries.length > 0}
+        onClose={() => { setOverlapEntries([]); setPendingSave(null); setIsTimerOverlapModal(false); setIsStopTimerOverlapModal(false); }}
+        title="Zeitüberschneidung erkannt"
+      >
+        <p className="text-gray-600 mb-4">
+          {isStopTimerOverlapModal
+            ? 'Der Timer überschneidet sich mit '
+            : isTimerOverlapModal
+              ? 'Der Timer überschneidet sich mit '
+              : 'Dieser Eintrag überschneidet sich mit '}
+          {overlapEntries.length === 1 ? 'einem bestehenden Eintrag' : `${overlapEntries.length} bestehenden Einträgen`} für dieses Projekt:
+        </p>
+        <div className="space-y-2 mb-6">
+          {overlapEntries.map((entry) => (
+            <div key={entry.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.project.color }} />
+                <span className="font-medium text-gray-900">{entry.project.name}</span>
+                <span className="text-gray-400">·</span>
+                <span className="text-gray-500">{formatDate(entry.date)}</span>
+              </div>
+              <div className="text-gray-700">
+                {formatTime(entry.startTime)} – {entry.endTime ? formatTime(entry.endTime) : '?'}
+                {entry.description && <span className="ml-2 text-gray-500">({entry.description})</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => { setOverlapEntries([]); setPendingSave(null); setIsTimerOverlapModal(false); setIsStopTimerOverlapModal(false); }}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            onClick={() => { if (pendingSave) pendingSave(); }}
+            disabled={isSaving}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
+          >
+            {isSaving ? '...' : isStopTimerOverlapModal ? 'Trotzdem stoppen' : isTimerOverlapModal ? 'Trotzdem starten' : 'Trotzdem speichern'}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

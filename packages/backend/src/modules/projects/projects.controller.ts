@@ -16,7 +16,7 @@ export async function getAll(req: Request, res: Response, next: NextFunction): P
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const project = await projectsService.getById(req.params.id, req.user!.userId);
+    const project = await projectsService.getById(req.params.id as string, req.user!.userId);
     sendSuccess(res, project);
   } catch (err) {
     next(err);
@@ -35,7 +35,7 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const project = await projectsService.update(
-      req.params.id,
+      req.params.id as string,
       req.user!.userId,
       req.body as UpdateProjectInput,
     );
@@ -47,7 +47,7 @@ export async function update(req: Request, res: Response, next: NextFunction): P
 
 export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await projectsService.remove(req.params.id, req.user!.userId);
+    await projectsService.remove(req.params.id as string, req.user!.userId);
     sendSuccess(res, { message: 'Project deleted' });
   } catch (err) {
     next(err);
