@@ -16,7 +16,7 @@ export async function getAll(req: Request, res: Response, next: NextFunction): P
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const client = await clientsService.getById(req.params.id, req.user!.userId);
+    const client = await clientsService.getById(req.params.id as string, req.user!.userId);
     sendSuccess(res, client);
   } catch (err) {
     next(err);
@@ -38,7 +38,7 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const client = await clientsService.update(
-      req.params.id,
+      req.params.id as string,
       req.user!.userId,
       req.body as UpdateClientInput,
     );
@@ -50,7 +50,7 @@ export async function update(req: Request, res: Response, next: NextFunction): P
 
 export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await clientsService.remove(req.params.id, req.user!.userId);
+    await clientsService.remove(req.params.id as string, req.user!.userId);
     sendSuccess(res, { message: 'Client deactivated' });
   } catch (err) {
     next(err);
