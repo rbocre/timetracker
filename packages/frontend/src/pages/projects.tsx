@@ -37,7 +37,18 @@ const emptyForm: ProjectForm = {
   clientId: '',
 };
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+const COLORS = [
+  // Blues
+  '#3B82F6', '#1D4ED8', '#06B6D4', '#0EA5E9',
+  // Greens
+  '#10B981', '#22C55E', '#84CC16', '#16A34A',
+  // Warm
+  '#F59E0B', '#F97316', '#EF4444', '#DC2626',
+  // Purple / Pink
+  '#8B5CF6', '#A855F7', '#EC4899', '#DB2777',
+  // Neutral
+  '#6B7280', '#1F2937',
+];
 
 export function ProjectsPage() {
   const { t } = useTranslation();
@@ -152,12 +163,14 @@ export function ProjectsPage() {
           {projects.map((project) => (
             <div
               key={project.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
             >
+              <div className="h-2 w-full" style={{ backgroundColor: project.color }} />
+              <div className="p-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    className="w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm"
                     style={{ backgroundColor: project.color }}
                   />
                   <h3 className="font-semibold text-gray-900">{project.name}</h3>
@@ -189,6 +202,7 @@ export function ProjectsPage() {
                     CHF {project.hourlyRate}/h
                   </span>
                 )}
+              </div>
               </div>
             </div>
           ))}
@@ -247,19 +261,31 @@ export function ProjectsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('projects.color')}</label>
-            <div className="flex gap-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('projects.color')}</label>
+            <div className="flex flex-wrap gap-2 mb-3">
               {COLORS.map((color) => (
                 <button
                   key={color}
                   type="button"
+                  title={color}
                   onClick={() => setForm({ ...form, color })}
-                  className={`w-8 h-8 rounded-full border-2 transition-transform ${
-                    form.color === color ? 'border-gray-900 scale-110' : 'border-transparent'
+                  className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                    form.color === color ? 'border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400' : 'border-white shadow-sm'
                   }`}
                   style={{ backgroundColor: color }}
                 />
               ))}
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={form.color}
+                onChange={(e) => setForm({ ...form, color: e.target.value })}
+                className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+                title="Custom color"
+              />
+              <span className="text-sm text-gray-500 font-mono">{form.color}</span>
+              <div className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor: form.color }} />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4">

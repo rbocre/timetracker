@@ -10,12 +10,24 @@ Stundenerfassungs-App fuer Schweizer IT-Spezialisten. Trackt Stunden pro Projekt
 ## Features
 
 - Zeiterfassung mit Start/Stop-Timer oder manueller Eingabe
-- Projekt- und Kundenverwaltung
+- Projekt- und Kundenverwaltung mit **erweiterter Farbauswahl** (18 Voreinstellungen + freier Farbwähler)
 - Reports mit CSV-Export
 - Mehrsprachig (Deutsch / English)
 - Progressive Web App (PWA) — offline-faehig
 - JWT-basierte Authentifizierung
 - Responsive Design mit TailwindCSS
+
+## Farbauswahl für Projekte
+
+Jedes Projekt kann mit einer individuellen Farbe gekennzeichnet werden. Die Farbe erscheint als farbiger Balken oben auf der Projektkarte sowie im Farbkreis im Header.
+
+### Farboptionen
+
+- **18 Voreinstellungen** in den Kategorien Blues, Greens, Warm-Töne, Purple/Pink und Neutral
+- **Freier Farbwähler** — jede beliebige Farbe per Color-Picker oder Hex-Code wählbar
+- Live-Vorschau der gewählten Farbe mit Hex-Anzeige
+
+---
 
 ## Overlap Detection
 
